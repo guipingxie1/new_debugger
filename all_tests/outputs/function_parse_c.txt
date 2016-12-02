@@ -1,0 +1,38 @@
+----------------------------------------------------------
+The name of the function is : random_funct
+The return type is : void
+The variable(s) of random_funct is/are :
+	b	:	int
+	i	:	int
+
+
+----------------------------------------------------------
+The name of the function is : get
+The return type is : int
+The variable(s) of get is/are :
+	a	:	int
+	b	:	int
+
+
+----------------------------------------------------------
+The name of the function is : main
+The return type is : int
+The variable(s) of main is/are :
+	G	:	double
+	a	:	int
+	b	:	int
+	c	:	int
+	d	:	int
+	e	:	int
+	ee	:	char
+	f	:	float
+	g	:	double
+	hello	:	char*
+	i	:	int
+	l	:	long
+	m	:	char
+	parse	:	char*
+	s	:	short
+	sum	:	int
+
+

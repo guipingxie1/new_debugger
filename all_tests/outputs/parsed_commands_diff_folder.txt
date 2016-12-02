@@ -1,0 +1,30 @@
+The command(s) for : BREAK is/are
+	r
+	run
+The command(s) for : CONTINUE is/are
+	c
+The command(s) for : HELP is/are
+	n
+	s
+The command(s) for : POINT_INFO is/are
+	b
+	break
+The command(s) for : PRINT is/are
+	w
+The command(s) for : QUIT is/are
+	rm
+The command(s) for : REMOVE_BREAKPOINT is/are
+	rmw
+The command(s) for : REMOVE_WATCHPOINT is/are
+	i
+	info
+The command(s) for : RUN is/are
+	exit
+	q
+	quit
+The command(s) for : STEP is/are
+	p
+	print
+The command(s) for : WATCH is/are
+	h
+	help

@@ -1,0 +1,11 @@
+RUN=r,run
+CONTINUE=c
+STEP=s,n
+BREAK=b,break
+WATCH=w
+REMOVE_BREAKPOINT=rm
+REMOVE_WATCHPOINT=rmw
+POINT_INFO=i,info
+QUIT=q,quit,exit
+PRINT=p,print
+HELP=h,help

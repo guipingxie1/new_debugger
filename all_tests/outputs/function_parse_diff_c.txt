@@ -1,0 +1,24 @@
+----------------------------------------------------------
+The name of the function is : get_sum
+The return type is : int
+The variable(s) of get_sum is/are :
+
+
+----------------------------------------------------------
+The name of the function is : function
+The return type is : void
+The variable(s) of function is/are :
+	i	:	int
+	k	:	int
+
+
+----------------------------------------------------------
+The name of the function is : main
+The return type is : int
+The variable(s) of main is/are :
+	a	:	int
+	b	:	int
+	c	:	int
+	d	:	int
+
+
