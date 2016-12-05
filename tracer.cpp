@@ -223,6 +223,35 @@ void Tracer::handle_breakpoint(pid_t pid)
     parsed_object_dump.print_line(line_number);
     
     // TODO : need to reset breakpoints
+    reset_breakpoint = true;
+    former_breakpoint_address = former_address;
+}
+
+
+void Tracer::remove_breakpoint(pid_t pid, int line_number)
+{
+    int ignore;
+    long address = decoded_line.get_address_from_line(line_number, ignore);
+    
+    if (address != 0)
+    {
+        auto it = address_to_breakpoint_info.find((void*)address);
+        
+        if (it != address_to_breakpoint_info.end())
+        {
+            set_data(pid, (void*)address, (void*)((it -> second).get_data()));
+            address_to_breakpoint_info.erase(it);
+            std::cerr << "Removed breakpoint from line " << line_number << "\n";
+        }
+        else
+        {
+            std::cerr << "There is no breakpoint on line " << line_number << "\n";
+        }
+    }
+    else
+    {
+        std::cerr << "There is no breakpoint on line " << line_number << "\n";
+    }
 }
 
 
@@ -236,7 +265,7 @@ void Tracer::remove_breakpoint(pid_t pid, const std::string line_number)
         }
         else
         {
-            // TODO
+            remove_breakpoint(pid, stoi(line_number));
         }       
     }
     else
@@ -246,7 +275,7 @@ void Tracer::remove_breakpoint(pid_t pid, const std::string line_number)
 }
 
 
-void Tracer::handle_stepping(pid_t pid, int former_line_number)
+void Tracer::handle_stepping(pid_t pid)
 {
     // TODO
     void* instruction_address = get_instruction_pointer(pid);
@@ -256,6 +285,7 @@ void Tracer::handle_stepping(pid_t pid, int former_line_number)
 void Tracer::print_introduction()
 {
     // TODO
+    std::cerr << "Started the debugger\n";
 }
 
 
@@ -266,9 +296,30 @@ void Tracer::print_help_section()
 }
 
 
-void Tracer::print_all_breakpoints()
+void Tracer::print_all_watchpoints()
 {
     // TODO
+}
+
+
+void Tracer::print_all_breakpoints()
+{
+    if (address_to_breakpoint_info.size() == 0) 
+    {
+		std::cerr << "No active breakpoints are set\n\n";
+	}
+	else 
+	{
+		std::cerr << "    Type\t\tAddress\t\tLocation\n";
+		
+		for (auto it = address_to_breakpoint_info.begin(); it != address_to_breakpoint_info.end(); ++it) 
+		{
+			int line_number = decoded_line.get_line_number_from_address((long)(it -> first));
+			std::cerr << "    breakpoint\t\t" << it -> first << "\t" << line_number << "\n";
+		}
+		
+		std::cerr << "\n";
+	}
 }
 
 
@@ -491,6 +542,13 @@ void Tracer::parse_command(const std::string& input, std::string& command, std::
 }
 
 
+bool Tracer::step_into_breakpoint(pid_t pid)
+{
+    void* instruction_address = get_instruction_pointer(pid);
+    return address_to_breakpoint_info.find(instruction_address) != address_to_breakpoint_info.end();
+}
+
+
 bool Tracer::is_breakpoint(pid_t pid)
 {
     void* instruction_address = get_instruction_pointer(pid);
@@ -499,22 +557,8 @@ bool Tracer::is_breakpoint(pid_t pid)
 }
 
 
-void Tracer::handle_input_commands(pid_t pid)
+void Tracer::handle_input_commands(pid_t pid, bool is_first_stop)
 {
-    // TODO
-    bool at_breakpoint = is_breakpoint(pid);
-    if (at_breakpoint)
-    {
-        handle_breakpoint(pid);
-    }
-    else
-    {
-        // Is stepping through --- not at the very beginning
-        
-    }
-    
-    set_current_function(pid);
-    
     std::cerr << "(debugger) ";
     std::string input;
     
@@ -529,20 +573,41 @@ void Tracer::handle_input_commands(pid_t pid)
         
         if (command_enum == 1)
         {
-            // Run
+            if (is_first_stop)
+            {
+                break;
+            }
+            else
+            {
+                std::cerr << "The program is already running\n";
+            }
         }
         else if (command_enum == 2)
         {
-            // Continue
-            break;
+            if (is_first_stop)
+            {
+                std::cerr << "You need to run the debugger first\n";
+            }
+            else
+            {
+                should_continue =  true;
+                break;
+            }
         }
         else if (command_enum == 3)
         {
-            // Step
+            if (is_first_stop)
+            {
+                std::cerr << "You need to run the debugger first\n";
+            }
+            else
+            {
+                should_continue = false;
+                break;
+            }
         }
         else if (command_enum == 4)
         {
-            // Break
             handle_breakpoint_request(pid, additional_commands);
         }
         else if (command_enum == 5)
@@ -559,7 +624,8 @@ void Tracer::handle_input_commands(pid_t pid)
         }
         else if (command_enum == 8)
         {
-            // Point info
+            print_all_breakpoints();
+            print_all_watchpoints();
         }
         else if (additional_commands.empty() && command_enum == 9)
         {
@@ -583,11 +649,67 @@ void Tracer::handle_input_commands(pid_t pid)
         }
         
         std::cerr << "(debugger) ";
+    }   
+}
+
+
+void Tracer::take_action(pid_t pid)
+{
+    // TODO : logic
+    bool at_breakpoint = is_breakpoint(pid);
+    if (at_breakpoint)
+    {
+        handle_breakpoint(pid);
     }
+    else
+    {
+        // Is stepping through --- not at the very beginning
+        
+        // TODO : logic
+        if (reset_breakpoint)
+        {
+            void* instruction_address = get_instruction_pointer(pid);
+            set_breakpoint(pid, former_breakpoint_address, false);
+            reset_breakpoint = false;
+            //set_instruction_pointer(pid, former_breakpoint_address);
+            
+            if (step_into_breakpoint(pid))
+            {
+                
+            }
+        }
+        
+        if (step_into_breakpoint(pid))
+        {
+            
+        }
+        
+        if (should_continue)
+        {
+            ptrace(PTRACE_CONT, pid, NULL, NULL);
+            return;
+        }
+        else
+        {
+            handle_stepping(pid);
+        }
+    }
+    
+    set_current_function(pid);
+    
+    handle_input_commands(pid, false);
     
     // Need to reset the breakpoint however we should not on step
     
-    ptrace(PTRACE_CONT, pid, NULL, NULL);
+    // TODO
+    if (should_continue && !at_breakpoint)
+    {
+        ptrace(PTRACE_CONT, pid, NULL, NULL);
+    }
+    else
+    {
+        ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL);
+    }
 }
 
 
@@ -599,18 +721,23 @@ Tracer::Tracer(int argc, char* argv[])
     std::string object_file = compiled_file.get_object_file();
     
     decoded_line.initialize(executable, object_file, filename);
-    decoded_line.print_address_to_line();
+    //decoded_line.print_address_to_line();
     
     parsed_object_dump.initialize(executable, object_file, filename);
-    parsed_object_dump.print_all_function_data();
+    //parsed_object_dump.print_all_function_data();
     
     parsed_commands.initialize(executable, object_file);
     
     current_function = std::string("main");
+    former_line_number = parsed_object_dump.get_first_instruction_line(current_function);
  
     // Actually never used
     breakpoint_number = 0;
     watchpoint_number = 0;
+    
+    reset_breakpoint = false;
+    
+    should_continue = true;
     
     Tracer::static_compiled_object = executable;
     Tracer::static_object_file = object_file;
@@ -670,12 +797,12 @@ void Tracer::run_debugger(char* argv[])
 		if (WSTOPSIG(status) == SIGTRAP) 	
 		{	
 			print_introduction();
-			//handle_input_commands(trace_child);
-			set_breakpoint_at_main(trace_child);
-			set_breakpoint_at_line(trace_child, 39);
+			handle_input_commands(trace_child, true);
 			ptrace(PTRACE_CONT, trace_child, NULL, NULL);
 		}	
 	}
+	
+	// TODO : stop it at main and set stuff for watchpoints
 /*	
 	// Stop at main
 	waitpid(trace_child, &status, 0);
@@ -703,7 +830,8 @@ void Tracer::run_debugger(char* argv[])
 	void* instruction_address = get_instruction_pointer(trace_child);
 	std::cout << instruction_address << "\n";
 */	
-	do {
+	do 
+	{
 		waitpid(trace_child, &status, 0);
 		
 		if (WIFEXITED(status) || (WIFSIGNALED(status) && WTERMSIG(status) == SIGKILL)) 
@@ -715,7 +843,7 @@ void Tracer::run_debugger(char* argv[])
 		{
 			if (WSTOPSIG(status) == SIGTRAP) 
 			{
-				handle_input_commands(trace_child);
+				take_action(trace_child);
 			}
 		}
 	}

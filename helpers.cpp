@@ -22,7 +22,8 @@
 std::string Helpers::generate_random_string()
 {
     char str[10];
-    for (int idx = 0; idx < 9; ++idx)
+    str[0] = '.';
+    for (int idx = 1; idx < 9; ++idx)
     {
         int random_int = rand() % 26;
         str[idx] = (char)(random_int + 'a');

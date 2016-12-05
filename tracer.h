@@ -37,6 +37,15 @@ class Tracer
         int breakpoint_number;
         int watchpoint_number;
         
+        // Need a better way to keep track of hitting a breakpoint
+        bool reset_breakpoint;
+        
+        void* former_breakpoint_address;
+        
+        bool should_continue;
+        
+        int former_line_number;
+        
         std::map< void*, BreakpointInfo > address_to_breakpoint_info;
         
     
@@ -72,7 +81,7 @@ class Tracer
         
         void handle_breakpoint(pid_t pid);
         
-        void handle_stepping(pid_t pid, int former_line_number);
+        void handle_stepping(pid_t pid);
         
         void print_introduction();
         
@@ -80,7 +89,13 @@ class Tracer
         
         void print_all_breakpoints();
         
-        void handle_input_commands(pid_t pid);
+        void print_all_watchpoints();
+        
+        void handle_first_input_commands(pid_t pid);
+        
+        void take_action(pid_t pid);
+        
+        void handle_input_commands(pid_t pid, bool is_first_stop);
         
         void print_variable(pid_t pid, const std::string& variable, const std::string& function);
         
@@ -101,6 +116,10 @@ class Tracer
         void handle_breakpoint_request(pid_t pid, const std::string break_position);
         
         void remove_breakpoint(pid_t pid, const std::string line_number);
+        
+        void remove_breakpoint(pid_t pid, int line_number);
+        
+        bool step_into_breakpoint(pid_t pid);
         
         
         
